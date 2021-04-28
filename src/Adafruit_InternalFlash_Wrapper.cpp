@@ -27,14 +27,12 @@ Adafruit_InternalFlash_Wrapper::Adafruit_InternalFlash_Wrapper() : Adafruit_SPIF
 Adafruit_InternalFlash_Wrapper::Adafruit_InternalFlash_Wrapper(Adafruit_FlashTransport_InternalFlash *transport)
     : Adafruit_SPIFlash(transport) 
 {
-  //Serial.println("Adafruit_InternalFlash_Wrapper::Adafruit_InternalFlash_Wrapper");
   _cache = NULL;
 }
 
 bool Adafruit_InternalFlash_Wrapper::begin(SPIFlash_Device_t const *flash_devs,
                               size_t count) 
 {
-  //Serial.println("Adafruit_InternalFlash_Wrapper::begin");
   if (_trans == NULL)
     return false;
   _trans->begin();
@@ -90,3 +88,4 @@ bool Adafruit_InternalFlash_Wrapper::writeBlocks(uint32_t block, const uint8_t *
   SPIFLASH_LOG(block, nb);
   return _cache->write(this, block * 512, src, 512 * nb);
 }
+

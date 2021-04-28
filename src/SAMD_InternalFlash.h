@@ -34,17 +34,17 @@
   #define InternalFlash(name, size) \
   __attribute__((__aligned__(8192))) \
   static const uint8_t PPCAT(_data,name)[(size+8191)/8192*8192] = { }; \
-  FlashClass name(PPCAT(_data,name), size);
+  InternalFlashClass name(PPCAT(_data,name), size);
 #else
   #define InternalFlash(name, size) \
   __attribute__((__aligned__(256))) \
   static const uint8_t PPCAT(_data,name)[(size+255)/256*256] = { }; \
-  FlashClass name(PPCAT(_data,name), size);
+  InternalFlashClass name(PPCAT(_data,name), size);
 #endif
 
-class FlashClass {
+class InternalFlashClass {
 public:
-  FlashClass(const void *flash_addr = NULL, uint32_t size = 0);
+  InternalFlashClass(const void *flash_addr = NULL, uint32_t size = 0);
 
   void write(uint32_t offset, const void *data, uint32_t size);
   void erase(uint32_t offset, uint32_t size);
@@ -52,13 +52,23 @@ public:
 
   uint32_t get_flash_size() const { return flash_size;}
   void *get_flash_address() const { return (void*)flash_address;}
+
+  void flush_buffer();
+
 private:
   const uint32_t PAGE_SIZE, PAGES, MAX_FLASH, ROW_SIZE;
   const volatile void *flash_address;
   const uint32_t flash_size;
-
-private:
+  void write(const volatile void *flash_ptr, const void *data, uint32_t size);
+  void erase(const volatile void *flash_ptr, uint32_t offset, uint32_t size);
+  void read(const volatile void *flash_ptr, void *data, uint32_t size);
   void erase(const volatile void *flash_ptr);
+
+#if defined(__SAMD51__)
+  uint8_t buff[8192];
+  uint32_t buff_addr;
+  bool buff_in_used;
+#endif
 };
 
 #endif	// SAMD_INTERNALFLASH_H_

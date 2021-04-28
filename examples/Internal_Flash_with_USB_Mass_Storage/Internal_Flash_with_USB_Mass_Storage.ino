@@ -12,7 +12,7 @@ Adafruit_USBD_MSC usb_msc;
 
 // Allocate the internal flash
 #define DISK_BLOCK_NUM  400     // Number of blocks 400
-#define DISK_BLOCK_SIZE 512     // Block size in bytes
+#define DISK_BLOCK_SIZE 512     // Block size in bytes, should always be 512
 InternalFlash(my_internal_storage, DISK_BLOCK_SIZE*DISK_BLOCK_NUM);
 
 // The wrapper for the Adafruit SPI Flash
@@ -39,8 +39,9 @@ int32_t msc_read_cb (uint32_t lba, void* buffer, uint32_t bufsize)
 int32_t msc_write_cb (uint32_t lba, uint8_t* buffer, uint32_t bufsize)
 {
   //Serial.printf("Writing at %d with size %d\n",lba,bufsize);
-  // Erasing is absolutly necessary otherwise writing does not work
-  my_internal_storage.erase(lba*DISK_BLOCK_SIZE,bufsize);
+  // Erase should be done before every writing to the flash
+  my_internal_storage.erase(lba*DISK_BLOCK_SIZE, bufsize);
+  // Write to the flash
   my_internal_storage.write(lba*DISK_BLOCK_SIZE, buffer, bufsize);
   return bufsize;
 }
@@ -50,7 +51,9 @@ int32_t msc_write_cb (uint32_t lba, uint8_t* buffer, uint32_t bufsize)
 void msc_flush_cb (void)
 {
   //Serial.printf("Flushing begin\n");
-  // nothing to do
+  // sync with flash
+  my_internal_storage.flush_buffer();
+  //Serial.printf("Flushing end\n");
 }
 
 
@@ -71,7 +74,7 @@ void setup() {
 
   Serial.begin(115200);
   while ( !Serial ) delay(10);   // wait for native usb
-
+  
   Serial.printf("Internal flash with address %d and size %d\n", my_internal_storage.get_flash_address(),my_internal_storage.get_flash_size());
   
   // Setup for the internal flash
@@ -79,26 +82,42 @@ void setup() {
     Serial.println("Internal flash successfully set up.");
   else
     Serial.println("Error: failed to set up the internal flash.");
-
+    
   // The file system object from SdFat to read/write to the files in the internal flash
   if ( !fatfs.begin(&flash) )
-  {
     Serial.println("Error: file system not existing. The internal flash drive should first be formated with Windows or fdisk on Linux.");
-  }
-  else
-  {
-    Serial.println("File system successfully open.");
+}
 
+void loop() {
+  // put your main code here, to run repeatedly:
+  delay(100);
+
+  if (!Serial.available())
+    return;
+
+  char c=Serial.read();
+  if (c=='m')
+  {
+    Serial.println("Mount filesystem");
+    // The file system object from SdFat to read/write to the files in the internal flash
+    // The file system should be mounted every time it is modified through the tinyUSB
+    if (!fatfs.begin(&flash))
+      Serial.println("Error: file system not existing. The internal flash drive should first be formated with Windows or fdisk on Linux.");
+  }
+  else if (c=='l')
+  {
     // List all the files in the internal flash drive
-    File root;
-    File file;
+    Serial.println("Listing files");
+    SdFile root;
     if (!root.open("/")) {
       Serial.println("open root failed");
     }
     // Open next file in root.
     // Warning, openNext starts at the current directory position
     // so a rewind of the directory may be required.
-    while (file.openNext(&root, O_RDONLY)) {
+    File file;
+    while (file.openNext(&root, O_RDONLY)) 
+    {
       file.printFileSize(&Serial);
       Serial.write(' ');
       file.printModifyDateTime(&Serial);
@@ -109,12 +128,35 @@ void setup() {
         Serial.write('/');
       }
       Serial.println();
+      // The file should be close to go to the next file
       file.close();
     }
-
+  }
+  else if (c=='c')
+  {
+    Serial.println("Create a file");
     // open the file. note that only one file can be open at a time,
     // so you have to close this one before opening another.
-    File myFile = fatfs.open("test.txt", FILE_WRITE);
+    File myFile = fatfs.open("testCreate.txt", FILE_WRITE);
+  
+    // if the file opened okay, write to it:
+    if (myFile) {
+      // close the file:
+      myFile.close();
+      // sync with flash
+      my_internal_storage.flush_buffer();
+      Serial.println("done.");
+    } else {
+      // if the file didn't open, print an error:
+      Serial.println("error opening test.txt");
+    }
+  }
+  else if (c=='w')
+  {
+    Serial.println("Write a file");
+    // open the file. note that only one file can be open at a time,
+    // so you have to close this one before opening another.
+    File myFile = fatfs.open("testWrite.txt", FILE_WRITE);
   
     // if the file opened okay, write to it:
     if (myFile) {
@@ -122,14 +164,13 @@ void setup() {
       myFile.println("testing 1, 2, 3.");
       // close the file:
       myFile.close();
+      // sync with flash
+      my_internal_storage.flush_buffer();
       Serial.println("done.");
     } else {
       // if the file didn't open, print an error:
       Serial.println("error opening test.txt");
     }
   }
-}
 
-void loop() {
-  // put your main code here, to run repeatedly:
 }

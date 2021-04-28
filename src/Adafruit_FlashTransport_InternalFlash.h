@@ -30,18 +30,18 @@
 #include "flash_devices.h"
 #include <Adafruit_FlashTransport.h>
 
-class FlashClass;
+class InternalFlashClass;
 class Adafruit_InternalFlash_Wrapper;
 
 class Adafruit_FlashTransport_InternalFlash : public Adafruit_FlashTransport {
   friend Adafruit_InternalFlash_Wrapper;
 
 private:
-  FlashClass *_flash;
+  InternalFlashClass *_flash;
   SPIFlash_Device_t _flash_device;
 
 public:
-  Adafruit_FlashTransport_InternalFlash(FlashClass *_flash);
+  Adafruit_FlashTransport_InternalFlash(InternalFlashClass *_flash);
 
   virtual void begin(void);
 

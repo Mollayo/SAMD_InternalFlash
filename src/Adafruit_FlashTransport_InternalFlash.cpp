@@ -25,7 +25,7 @@
 #include "Adafruit_FlashTransport_InternalFlash.h"
 #include "SAMD_InternalFlash.h"
 
-Adafruit_FlashTransport_InternalFlash::Adafruit_FlashTransport_InternalFlash(FlashClass *flash):_flash{flash}
+Adafruit_FlashTransport_InternalFlash::Adafruit_FlashTransport_InternalFlash(InternalFlashClass *flash):_flash{flash}
 {
   //Serial.println("Adafruit_FlashTransport_InternalFlash::Adafruit_FlashTransport_InternalFlash");
   _cmd_read = SFLASH_CMD_READ;
@@ -105,8 +105,6 @@ bool Adafruit_FlashTransport_InternalFlash::eraseCommand(uint8_t command,
 {
   uint32_t erase_sz = (command == SFLASH_CMD_ERASE_BLOCK) ? SFLASH_BLOCK_SIZE
                                                           : SFLASH_SECTOR_SIZE;
-  //Serial.printf("Adafruit_FlashTransport_InternalFlash::eraseCommand with addr %d and length %d",addr,erase_sz);
-  //Serial.println();
   _flash->erase(addr,erase_sz);
   return true;
 }
