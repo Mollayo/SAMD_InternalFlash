@@ -11,8 +11,8 @@
 Adafruit_USBD_MSC usb_msc;
 
 // Allocate the internal flash
-#define DISK_BLOCK_NUM  400     // Number of blocks 400
-#define DISK_BLOCK_SIZE 512     // Block size in bytes, should always be 512
+#define DISK_BLOCK_NUM  400     // Number of blocks 400 for the SAMD21, 875 for the SAMD51
+#define DISK_BLOCK_SIZE 512     // Block size in bytes
 InternalFlash(my_internal_storage, DISK_BLOCK_SIZE*DISK_BLOCK_NUM);
 
 // The wrapper for the Adafruit SPI Flash
@@ -100,7 +100,8 @@ void loop() {
   {
     Serial.println("Mount filesystem");
     // The file system object from SdFat to read/write to the files in the internal flash
-    // The file system should be mounted every time it is modified through the tinyUSB
+    // The file system should be mounted every time it is modified through the tinyUSB. 
+    // Also the flash drive should be unmounted
     if (!fatfs.begin(&flash))
       Serial.println("Error: file system not existing. The internal flash drive should first be formated with Windows or fdisk on Linux.");
   }
@@ -164,7 +165,7 @@ void loop() {
       myFile.println("testing 1, 2, 3.");
       // close the file:
       myFile.close();
-      // sync with flash
+      // sync with flash. This is is needed for the SAMD51
       my_internal_storage.flush_buffer();
       Serial.println("done.");
     } else {
