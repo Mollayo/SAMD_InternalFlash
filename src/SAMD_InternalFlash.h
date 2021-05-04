@@ -23,8 +23,11 @@
 #pragma once
 
 #include <Arduino.h>
+#include <FlashStorage.h>
+
 #include "Adafruit_FlashTransport_InternalFlash.h"
 #include "Adafruit_InternalFlash_Wrapper.h"
+
 
 // Concatenate after macro expansion
 #define PPCAT_NX(A, B) A ## B
@@ -56,13 +59,10 @@ public:
   void flush_buffer();
 
 private:
-  const uint32_t PAGE_SIZE, PAGES, MAX_FLASH, ROW_SIZE;
   const volatile void *flash_address;
   const uint32_t flash_size;
-  void write(const volatile void *flash_ptr, const void *data, uint32_t size);
-  void erase(const volatile void *flash_ptr, uint32_t offset, uint32_t size);
-  void read(const volatile void *flash_ptr, void *data, uint32_t size);
-  void erase(const volatile void *flash_ptr);
+
+  FlashClass fl;
 
 #if defined(__SAMD51__)
   uint8_t buff[8192];
