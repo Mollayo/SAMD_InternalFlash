@@ -6,7 +6,7 @@ The SAMD21 MCU has 256KB of Flash (512KB Flash for the SAMD51), which is quite l
 This library is for the Arduino IDE. It has been tested on the Seeeduino Xiaomi, the Adafruit Feather M0 Wifi and the ItsyBitsy M4 Express but it should work with all boards based on the SAMD21 or SAMD51 MCU.
 
 Dependencies:
-- FlashStorage library: https://github.com/cmaglie/FlashStorage
+- FlashStorage library: https://github.com/cmaglie/FlashStorage. This library should be downloaded from GitHub and not from the Arduino IDE. The one from the Arduino IDE is not the latest version although the version number is the same. And it contains a bug for writing on SAMD51 MCU.
 - Adafruit SPI Flash library: https://github.com/adafruit/Adafruit_SPIFlash
 
 
