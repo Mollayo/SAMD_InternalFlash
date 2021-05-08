@@ -9,11 +9,11 @@
 
 // The tinyUSB flash drive
 Adafruit_USBD_MSC usb_msc;
+// Block size in bytes for tinyUSB flash drive. Should be always 512
+#define DISK_BLOCK_SIZE 512
 
 // Allocate the internal flash
-#define DISK_BLOCK_NUM  400     // Number of blocks 400 for the SAMD21, 875 for the SAMD51
-#define DISK_BLOCK_SIZE 512     // Block size in bytes
-InternalFlash(my_internal_storage, DISK_BLOCK_SIZE*DISK_BLOCK_NUM);
+InternalFlash my_internal_storage;
 
 // The wrapper for the Adafruit SPI Flash
 Adafruit_FlashTransport_InternalFlash flashTransport(&my_internal_storage);
@@ -63,6 +63,7 @@ void setup() {
   usb_msc.setID("Adafruit", "Mass Storage", "1.0");
   
   // Set disk size
+  uint32_t DISK_BLOCK_NUM=my_internal_storage.get_flash_size()/DISK_BLOCK_SIZE;
   usb_msc.setCapacity(DISK_BLOCK_NUM, DISK_BLOCK_SIZE);
 
   // Set callbacks

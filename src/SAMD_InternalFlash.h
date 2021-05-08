@@ -29,45 +29,30 @@
 #include "Adafruit_InternalFlash_Wrapper.h"
 
 
-// Concatenate after macro expansion
-#define PPCAT_NX(A, B) A ## B
-#define PPCAT(A, B) PPCAT_NX(A, B)
 
-#if defined(__SAMD51__)
-  #define InternalFlash(name, size) \
-  __attribute__((__aligned__(8192))) \
-  static const uint8_t PPCAT(_data,name)[(size+8191)/8192*8192] = { }; \
-  InternalFlashClass name(PPCAT(_data,name), size);
-#else
-  #define InternalFlash(name, size) \
-  __attribute__((__aligned__(256))) \
-  static const uint8_t PPCAT(_data,name)[(size+255)/256*256] = { }; \
-  InternalFlashClass name(PPCAT(_data,name), size);
-#endif
-
-class InternalFlashClass {
+class InternalFlash {
 public:
-  InternalFlashClass(const void *flash_addr = NULL, uint32_t size = 0);
+  InternalFlash();
 
   void write(uint32_t offset, const void *data, uint32_t size);
   void erase(uint32_t offset, uint32_t size);
   void read(uint32_t offset, void *data, uint32_t size);
 
-  uint32_t get_flash_size() const { return flash_size;}
-  void *get_flash_address() const { return (void*)flash_address;}
+  uint32_t get_flash_size() const { return _flash_size;}
+  void *get_flash_address() const { return (void*)_flash_address;}
 
   void flush_buffer();
 
 private:
-  const volatile void *flash_address;
-  const uint32_t flash_size;
+  volatile void *_flash_address;
+  uint32_t _flash_size;
 
   FlashClass fl;
 
 #if defined(__SAMD51__)
-  uint8_t buff[8192];
-  uint32_t buff_addr;
-  bool buff_in_used;
+  uint8_t _buff[8192];
+  uint32_t _buff_addr;
+  bool _buff_in_used;
 #endif
 };
 

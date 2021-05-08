@@ -19,95 +19,111 @@
 
 #include "SAMD_InternalFlash.h"
 
-void InternalFlashClass::write(uint32_t offset, const void *data, uint32_t size)
+
+// Address of the end of the sketch in the internal flash
+extern "C" {
+extern uint32_t __etext; // CODE END. Symbol exported from linker script
+}
+
+#define FLASH_PAGE_SIZE (8 << NVMCTRL->PARAM.bit.PSZ)
+#define FLASH_NUM_PAGES NVMCTRL->PARAM.bit.NVMP
+#define FLASH_SIZE (FLASH_PAGE_SIZE * FLASH_NUM_PAGES)
+#define FLASH_BLOCK_SIZE (FLASH_PAGE_SIZE * 16)
+
+InternalFlash::InternalFlash()
+{
+  _flash_address = (uint8_t *)&__etext; // OK to overwrite the '0' there
+  uint16_t partialBlock = (uint32_t)_flash_address % FLASH_BLOCK_SIZE;
+  if (partialBlock) {
+    _flash_address += FLASH_BLOCK_SIZE - partialBlock;
+  }
+  // Move ahead one block. This shouldn't be necessary, but for
+  // some reason certain programs are clobbering themselves.
+  _flash_address += FLASH_BLOCK_SIZE;
+  _flash_size=FLASH_SIZE-(int)_flash_address;
+}
+
+void InternalFlash::write(uint32_t offset, const void *data, uint32_t size)
 {
 #if defined(__SAMD51__)
-  // flash_address+offset should be a multiple of 8192 for __SAMD51__
+  // _flash_address+offset should be a multiple of 8192 for __SAMD51__
   uint32_t new_buff_addr=offset-(offset%8192);
   // If the buffer is in used and the addr is different, we flush the buffer to use it with the new addr
-  if (buff_in_used==true && new_buff_addr!=buff_addr)
+  if (_buff_in_used==true && new_buff_addr!=_buff_addr)
     flush_buffer();
   
-  buff_addr=new_buff_addr;
+  _buff_addr=new_buff_addr;
   // Initialise the buffer
-  if (buff_in_used==false)
+  if (_buff_in_used==false)
   {
-    memcpy((void *)(buff), (const void *)(flash_address+buff_addr), 8192); 
-    buff_in_used=true;
+    memcpy((void *)(_buff), (const void *)(_flash_address+_buff_addr), 8192); 
+    _buff_in_used=true;
   }
   // Write the data to the buffer
   uint32_t buff_offset=offset%8192;
-  memcpy((void *)(buff+buff_offset), (const void *)data, size);
-  //Serial.printf("InternalFlashClass::write to buffer at offset %d (base addr: %d) with size %d",
-  //								offset, buff_addr, size);
+  memcpy((void *)(_buff+buff_offset), (const void *)data, size);
+  //Serial.printf("InternalFlash::write to buffer at offset %d (base addr: %d) with size %d",
+  //								offset, _buff_addr, size);
   //Serial.println();
 #else
-  fl.write(flash_address+offset, data, size);
-  //Serial.printf("InternalFlashClass::write to buffer at offset %d with size %d", offset, size);
+  fl.write(_flash_address+offset, data, size);
+  //Serial.printf("InternalFlash::write to buffer at offset %d with size %d", offset, size);
   //Serial.println();
 #endif
 }
 
-void InternalFlashClass::erase(uint32_t offset, uint32_t size)
+void InternalFlash::erase(uint32_t offset, uint32_t size)
 {
 #if defined(__SAMD51__)
   // Do nothing for the __SAMD51__. Erase is done when the buffer is flushed
 #else
-  //volatile void *flash_address_offset = (volatile uint32_t *)(flash_address+offset);
-  fl.erase(flash_address+offset, size);
+  //volatile void *flash_address_offset = (volatile uint32_t *)(_flash_address+offset);
+  fl.erase(_flash_address+offset, size);
 #endif
 }
 
 
-void InternalFlashClass::read(uint32_t offset, void *data, uint32_t size)
+void InternalFlash::read(uint32_t offset, void *data, uint32_t size)
 {
-  //Serial.printf("InternalFlashClass::read at offset %d and with size %d",offset,size);
+  //Serial.printf("InternalFlash::read at offset %d and with size %d",offset,size);
   //Serial.println();
 #if defined(__SAMD51__)
   // Check if the data which is read is located in the buffer
   uint32_t new_buff_addr=offset-(offset%8192);
-  if (buff_in_used==true && new_buff_addr==buff_addr)
+  if (_buff_in_used==true && new_buff_addr==_buff_addr)
   {
-    // Assume that buff_offset + size < sizeof(buff)
+    // Assume that buff_offset + size < sizeof(_buff)
     uint32_t buff_offset=offset%8192;
-    memcpy(data,(void *)(buff+buff_offset), size);
+    memcpy(data,(void *)(_buff+buff_offset), size);
   }
   else
   {
-    fl.read(flash_address+offset, data, size);
+    fl.read(_flash_address+offset, data, size);
   }
 #else
-  fl.read(flash_address+offset, data, size);
+  fl.read(_flash_address+offset, data, size);
 #endif
 }
 
-InternalFlashClass::InternalFlashClass(const void *flash_addr, uint32_t size) :
-  flash_address((volatile void *)flash_addr),
-  flash_size(size)
-{
-}
-
-
-void InternalFlashClass::flush_buffer()
+void InternalFlash::flush_buffer()
 {
 // This is specific to __SAMD51__ since the writing has to be 8192 bytes long
-
 #if defined(__SAMD51__)
   // If nothing in the buffer, we quite
-  if (buff_in_used==false)
+  if (_buff_in_used==false)
     return;
 
-  //Serial.printf("InternalFlashClass::flush_buffer");
+  //Serial.printf("InternalFlash::flush_buffer");
   //Serial.println();
 
   // Erase first
-  fl.erase(flash_address+buff_addr, 8192);
+  fl.erase(_flash_address+_buff_addr, 8192);
 
   // Write the buffer
-  //Serial.printf("InternalFlashClass::write at offset %d and with size %d", buff_addr, 8192);
+  //Serial.printf("InternalFlash::write at offset %d and with size %d", _buff_addr, 8192);
   //Serial.println();
-  fl.write(flash_address+buff_addr, (const void *)buff, 8192);
+  fl.write(_flash_address+_buff_addr, (const void *)_buff, 8192);
   // Indicate the buffer is empty
-  buff_in_used=false;
+  _buff_in_used=false;
 #endif
 }

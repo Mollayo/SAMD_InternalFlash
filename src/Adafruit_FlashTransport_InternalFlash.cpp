@@ -25,7 +25,7 @@
 #include "Adafruit_FlashTransport_InternalFlash.h"
 #include "SAMD_InternalFlash.h"
 
-Adafruit_FlashTransport_InternalFlash::Adafruit_FlashTransport_InternalFlash(InternalFlashClass *flash):_flash{flash}
+Adafruit_FlashTransport_InternalFlash::Adafruit_FlashTransport_InternalFlash(InternalFlash *flash):_flash{flash}
 {
   //Serial.println("Adafruit_FlashTransport_InternalFlash::Adafruit_FlashTransport_InternalFlash");
   _cmd_read = SFLASH_CMD_READ;
