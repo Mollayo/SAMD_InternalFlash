@@ -25,10 +25,10 @@ extern "C" {
 extern uint32_t __etext; // CODE END. Symbol exported from linker script
 }
 
-#define FLASH_PAGE_SIZE (8 << NVMCTRL->PARAM.bit.PSZ)
+#define SAMD_FLASH_PAGE_SIZE (8 << NVMCTRL->PARAM.bit.PSZ)
 #define FLASH_NUM_PAGES NVMCTRL->PARAM.bit.NVMP
-#define FLASH_SIZE (FLASH_PAGE_SIZE * FLASH_NUM_PAGES)
-#define FLASH_BLOCK_SIZE (FLASH_PAGE_SIZE * 16)
+#define SAMD_FLASH_SIZE (SAMD_FLASH_PAGE_SIZE * FLASH_NUM_PAGES)
+#define FLASH_BLOCK_SIZE (SAMD_FLASH_PAGE_SIZE * 16)
 
 InternalFlash::InternalFlash()
 {
@@ -40,7 +40,7 @@ InternalFlash::InternalFlash()
   // Move ahead one block. This shouldn't be necessary, but for
   // some reason certain programs are clobbering themselves.
   _flash_address += FLASH_BLOCK_SIZE;
-  _flash_size=FLASH_SIZE-(int)_flash_address;
+  _flash_size=SAMD_FLASH_SIZE-(int)_flash_address;
 }
 
 void InternalFlash::write(uint32_t offset, const void *data, uint32_t size)

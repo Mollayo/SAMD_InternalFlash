@@ -44,7 +44,7 @@ public:
   void flush_buffer();
 
 private:
-  volatile void *_flash_address;
+  volatile uint8_t *_flash_address;
   uint32_t _flash_size;
 
   FlashClass fl;
