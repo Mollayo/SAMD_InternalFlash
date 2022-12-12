@@ -47,6 +47,12 @@ void Adafruit_FlashTransport_InternalFlash::begin(void)
   // Internal flash is always available
 }
 
+void Adafruit_FlashTransport_InternalFlash::end(void)
+{
+  //Serial.println("Adafruit_FlashTransport_InternalFlash::end");
+  // Internal flash is always available
+}
+
 SPIFlash_Device_t *Adafruit_FlashTransport_InternalFlash::getFlashDevice(void) {
   //Serial.println("Adafruit_FlashTransport_InternalFlash::getFlashDevice");
   if (!_flash)
