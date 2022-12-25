@@ -133,6 +133,7 @@ void loop() {
       // The file should be close to go to the next file
       file.close();
     }
+    root.close();
   }
   else if (c=='c')
   {
@@ -150,7 +151,7 @@ void loop() {
       Serial.println("done.");
     } else {
       // if the file didn't open, print an error:
-      Serial.println("error opening test.txt");
+      Serial.println("error opening testCreate.txt");
     }
   }
   else if (c=='w')
@@ -162,7 +163,7 @@ void loop() {
   
     // if the file opened okay, write to it:
     if (myFile) {
-      Serial.println("Writing to test.txt...");
+      Serial.println("Writing to testWrite.txt...");
       myFile.println("testing 1, 2, 3.");
       // close the file:
       myFile.close();
@@ -171,7 +172,7 @@ void loop() {
       Serial.println("done.");
     } else {
       // if the file didn't open, print an error:
-      Serial.println("error opening test.txt");
+      Serial.println("error opening testWrite.txt");
     }
   }
 
